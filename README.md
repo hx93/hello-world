@@ -4,3 +4,4 @@ my first repository
 add
 
 ...
+close issue
