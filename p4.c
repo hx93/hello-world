@@ -1,6 +1,6 @@
 //
 //  main.cpp
-//  p4
+//  p5
 //
 //  Created by 徐徽 on 16/4/30.
 //  Copyright © 2016年 Hui Xu. All rights reserved.
@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <math.h>
+//#include "p3.cpp"
 
 #define rank 1
 #define e 2.71828
@@ -36,10 +37,10 @@ double dfda(double x_, double t){//, double x[]) {
 double f0(double x, double x_, double t, double h) {
     return x-x_-h*dfda(x, t+1);
     /*
-    double d[1];
-    dfda(x, t+1, d);
-    f[0] = x[0]-x_[0]-h*d[0];
-    return sqrt(f[0]*f[0]);*/
+     double d[1];
+     dfda(x, t+1, d);
+     f[0] = x[0]-x_[0]-h*d[0];
+     return sqrt(f[0]*f[0]);*/
 }
 
 // f1 = x_i+1 - x_i - h * (f(x_i+1,t_i+1) + f(x_i, t_i))/2
@@ -79,7 +80,7 @@ double backward(double x_, double t, double x, double h) {
         }
         step = step_ * 2;
         x += step_;
-         
+        
         //x += step;
     }
     return x;
@@ -122,7 +123,7 @@ double rk4(double x, double t, double h) {
     double k2 = dfda(x+k1*h/2, t+h/2);
     double k3 = dfda(x+k2*h/2, t+h/2);
     double k4 = dfda(x+k3*h, t+h);
-        //std::cout << k1 << " "<<k2 << " "<< k3 << " "<<k4 << std::endl;
+    //std::cout << k1 << " "<<k2 << " "<< k3 << " "<<k4 << std::endl;
     double x_ = x + (k1+2*k2+2*k3+k4)/6;
     //std::cout << x_ << std::endl;
     return x_;
@@ -152,7 +153,7 @@ double rk34(double x, double t, double h) {
         } else {
             break;
         }
-
+        
     }
     //std::cout << x_ << std::endl;
     return x_4;
@@ -190,7 +191,7 @@ void validate() {
     std::cout<<"\nBackward"<<std::endl;
     for (int i=0; i<5; i++) {
         t = i;
-       x = backward(x, t, x, h);
+        x = backward(x, t, x, h);
         std::cout<<x<<"\t";
     }
     x=2;
@@ -242,8 +243,23 @@ void validate() {
 double i(double t) {
     t = t*1e9;
     
+    if (t<0.5) {
+        return .0001*t*2;
+    } else if (t<19.5) {
+        return 0.001;
+    } else if (t<20) {
+        return 2*(20-t)*.0001;
+    } else if (t<40) {
+        return 0;
+    }
+    return 0;
+}
+
+double i_3(double t) {
+    t = t*1e9;
+    
     //if ( (t<0) or (t>100))
-        //std::cout<<t<<" T out of range"<<std::endl;
+    //std::cout<<t<<" T out of range"<<std::endl;
     
     while (t>20)
         t -= 20;
@@ -258,24 +274,27 @@ double i(double t) {
         return 0;
 }
 
-/*
-void dfda(double x[], double t, double d[]) {
-    //std::cout<<"x0 "<<x[0]<<std::endl;
-    //std::cout<<"x1 "<<x[1]<<std::endl;
-    d[0] = -1/C1*( x[0]/R1 + (x[0]-x[1])/R2 - i(t) );
-    d[1] = -1/C2*( (x[1]-x[0])/R2 + x[1]/R3 );
-}*/
 
+ void dfda(double x[], double t, double d[]) {
+ //std::cout<<"x0 "<<x[0]<<std::endl;
+ //std::cout<<"x1 "<<x[1]<<std::endl;
+ d[0] = -1/C1*( x[0]/R1 + (x[0]-x[1])/R2 - i(t) );
+ d[1] = -1/C2*( (x[1]-x[0])/R2 + x[1]/R3 );
+ }
+
+//
 double Ids(double x[]) {
-    double Is = 5e-6, K = 0.7, Vth = 1.5 , Vgs = x[0], Vds = x[1], VT = 26e-3;
-    return Is*(pow(log(1+exp(K*(Vgs-Vth)/2/VT)),2)-pow(log(1+exp((K*(Vgs-Vth)-Vds)/2/VT)),2));
+    double Is = 5e-6, K = 0.7, Vth = 1.5 , Vgs = x[0], Vds = x[1];
+    double VT_ = 26e-3;
+    return Is*(pow(log(1+exp(K*(Vgs-Vth)/2/VT_)),2)-pow(log(1+exp((K*(Vgs-Vth)-Vds)/2/VT_)),2));
 }
 
+/*
 void dfda(double x[], double t, double d[]) {
     d[0] = -1 * x[0]/RG/C1 + i(t);
     d[1] = -1 * Ids(x)/C2 - x[1]/RL/C2 + VDD/RL/C2;
 }
-
+*/
 
 // forward euler
 void Foward(double x_[], double t, double h, double x[]) {
@@ -433,7 +452,7 @@ void step(double f[], double j[], double del[]) {
         double tmp = 0;
         for (int k=0; k<N; k++) {
             tmp += f[k]*j[i*N+k];
-            }
+        }
         del[i] = -1*tmp;
     }
 }
@@ -458,7 +477,7 @@ void Backward(double x_[], double t, double h, double x[]) {
         step(f, j, delta);
         //std::cout<<"del0 "<<delta[0]<<std::endl;
         //std::cout<<"del1 "<<delta[1]<<std::endl;
-    
+        
         //step = -1 * f0(x, x_, t, h)/j;
         //std::cout<<"delta "<<step<<" "<<std::endl;
         
@@ -482,7 +501,7 @@ void Backward(double x_[], double t, double h, double x[]) {
         //std::cout<<"linesearch end"<<std::endl;
         //std::cout<<"x0 "<<x[0]<<std::endl;
         //std::cout<<"x1 "<<x[1]<<std::endl;
-
+        
         for (int i=0; i<N; i++) {
             x[i] += delta[i];
         }
@@ -575,7 +594,7 @@ void RK4(double x[], double t, double h) {
         x[i] += h*(k1+2*k2+2*k3+k4)/6;
         //std::cout << x_ << " x_ "<<(k1+2*k2+2*k3+k4)/6<< "  phih "<<std::endl;
     }
-
+    
 }
 
 void ForwardEuler() {
@@ -605,9 +624,9 @@ void BackwardEuler() {
     double x[] = {2.5, 2.5};
     double t = 0;
     int j = 1;
-
+    
     std::cout<<"BW"<<std::endl;
-
+    
     // backward euler
     for (int i=0; i<1e-7/h[j]; i++) {
         //std::cout<<t<<" t ";
@@ -632,7 +651,7 @@ void TrapezoidalEuler() {
     int j = 1;
     
     std::cout<<"TR"<<std::endl;
-
+    
     // trapezoidal
     for (int i=0; i<1e-7/h[j]; i++) {
         //std::cout<<t<<" t ";
@@ -657,7 +676,7 @@ void RungeKutta4() {
     int j = 1;
     
     std::cout<<"RK4"<<std::endl;
-
+    
     // forward euler
     for (int i=0; i<1e-7/h[j]; i++) {
         //std::cout<<t<<" t ";
@@ -687,10 +706,10 @@ void RK34ad(double x_[], double t, double h, double x[]) {
             double j[N*N];
             // compute j
             norm = jacobian_rkad(x, x_, t, h, j, f, k1, k2, k3, k4);
-        
+            
             double delta[N];
             step(f, j, delta);
-        
+            
             double min = norm;
             bool cont = true;
             //std::cout<<"linesearch"<<std::endl;
@@ -710,12 +729,15 @@ void RK34ad(double x_[], double t, double h, double x[]) {
             //std::cout<<"linesearch end"<<std::endl;
             //std::cout<<"x0 "<<x[0]<<std::endl;
             //std::cout<<"x1 "<<x[1]<<std::endl;
-        
+            
             for (int i=0; i<N; i++) {
                 x[i] += delta[i];
             }
         }
         //std::cout<<k1[0]<< " " << k2[0]<< " "<<k3[0]<<" "<<k4[0]<<std::endl;
+        
+        
+        // adaptive
         // error estimation
         for (int i=0; i<N; i++) {
             E[i] = (-5*k1[i]+6*k2[i]+8*k3[i]-9*k4[i])*h/72;
@@ -734,8 +756,6 @@ void RK34ad(double x_[], double t, double h, double x[]) {
                 //std::cout<< "!" << std::endl;
             }
         }
-        
-        // adaptive
         if (check<0) {
             h = h/2;
             //std::cout<< "make it smaller" << std::endl;
@@ -755,74 +775,74 @@ void RK34ad(double x_[], double t, double h, double x[]) {
 // rk34
 void RK34(double x_[], double t, double h, double x[]) {
     double f[N], k1[N], k2[N], k3[N], k4[N];
-        double norm = 0.1;
-        while (norm>0.001) {
-            // get f
-            double j[N*N];
-            // compute j
-            norm = jacobian_rkad(x, x_, t, h, j, f, k1, k2, k3, k4);
-            
-            double delta[N];
-            step(f, j, delta);
-            
-            double min = norm;
-            bool cont = true;
-            //std::cout<<"linesearch"<<std::endl;
-            while (cont) {
-                cont = false;
-                double tmp = f_rkad(x, x_, t, h, f, k1, k2, k3, k4);
-                //std::cout<<"min "<<min<<" temp "<<tmp<<std::endl;
-                if (tmp<min) {
-                    //std::cout<<"find!"<<std::endl;
-                    min = tmp;
-                    cont =true;
-                    for (int i=0; i<N; i++) {
-                        delta[i] = delta[i]/2;
-                    }
+    double norm = 0.1;
+    while (norm>0.001) {
+        // get f
+        double j[N*N];
+        // compute j
+        norm = jacobian_rkad(x, x_, t, h, j, f, k1, k2, k3, k4);
+        
+        double delta[N];
+        step(f, j, delta);
+        
+        double min = norm;
+        bool cont = true;
+        //std::cout<<"linesearch"<<std::endl;
+        while (cont) {
+            cont = false;
+            double tmp = f_rkad(x, x_, t, h, f, k1, k2, k3, k4);
+            //std::cout<<"min "<<min<<" temp "<<tmp<<std::endl;
+            if (tmp<min) {
+                //std::cout<<"find!"<<std::endl;
+                min = tmp;
+                cont =true;
+                for (int i=0; i<N; i++) {
+                    delta[i] = delta[i]/2;
                 }
             }
-            //std::cout<<"linesearch end"<<std::endl;
-            //std::cout<<"x0 "<<x[0]<<std::endl;
-            //std::cout<<"x1 "<<x[1]<<std::endl;
-            
-            for (int i=0; i<N; i++) {
-                x[i] += delta[i];
-            }
         }
-        //std::cout<<k1[0]<< " " << k2[0]<< " "<<k3[0]<<" "<<k4[0]<<std::endl;
-        // error estimation
-
+        //std::cout<<"linesearch end"<<std::endl;
+        //std::cout<<"x0 "<<x[0]<<std::endl;
+        //std::cout<<"x1 "<<x[1]<<std::endl;
+        
+        for (int i=0; i<N; i++) {
+            x[i] += delta[i];
+        }
+    }
+    //std::cout<<k1[0]<< " " << k2[0]<< " "<<k3[0]<<" "<<k4[0]<<std::endl;
+    // error estimation
+    
 }
 
 
 void RungeKutta34() {
     double h[] = {2e-10, 1e-9};
     for (int j=1; j<2; j++) {
-    double x[] = {2.5, 2.5};
-    double t = 0;
+        double x[] = {2.5, 2.5};
+        double t = 0;
         std::cout<<"RK34!!!!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-    // forward euler
-    for (int i=0; i<1e-7/h[j]; i++) {
-        //std::cout<<t<<" t ";
-        double guess[N] = {x[0]+0.0001, x[1]+0.0001};
-        RK34(x, t, h[j], guess);
-        for (int m=0; m<print_time; m++) {
-            for (int k=0; k<N; k++) {
-                std::cout<<x[k]<<"\t";
-                x[k] = guess[k];
+        // forward euler
+        for (int i=0; i<1e-7/h[j]; i++) {
+            //std::cout<<t<<" t ";
+            double guess[N] = {x[0]+0.0001, x[1]+0.0001};
+            RK34(x, t, h[j], guess);
+            for (int m=0; m<print_time; m++) {
+                for (int k=0; k<N; k++) {
+                    std::cout<<x[k]<<"\t";
+                    x[k] = guess[k];
+                }
+                std::cout<<"\n";
             }
-            std::cout<<"\n";
+            //std::cout<<"\n"<<t<<"                *******"<<i<<std::endl;
+            t += h[j];
         }
-        //std::cout<<"\n"<<t<<"                *******"<<i<<std::endl;
-        t += h[j];
-    }
     }
 }
 
 void RungeKutta34_adaptive() {
     double h[] = {2e-10, 1e-9};
-    for (int j=1; j<2; j++) {
-        double x[] = {2.5, 2.5};
+    int j = 1;
+        double x[] = {0, 0};//{2.5, 2.5};
         double t = 0;
         std::cout<<"RK34 adaptive!!!!!!!!!!!!!!!!!!!!!!"<<std::endl;
         // forward euler
@@ -840,24 +860,29 @@ void RungeKutta34_adaptive() {
             //std::cout<<"\n"<<t<<"                *******"<<i<<std::endl;
             t += h[j];
         }
-    }
 }
 
 void task3() {
+    // for p5
     //ForwardEuler();
     //BackwardEuler();
     //TrapezoidalEuler();
     //RungeKutta4();
     //RungeKutta34();
+    //RungeKutta34_adaptive();
+}
+
+void p5() {
+    // for p5
     RungeKutta34_adaptive();
+    
+    
 }
 
 int main(int argc, const char * argv[]) {
     //validate();
     task3();
-    
-    
-
+    p5();
     
     return 0;
 }
